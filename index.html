@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reconstruye tu Camino</title>
+<style>
+  body {
+    margin: 0; background: linear-gradient(180deg, #001219, #003566);
+    overflow: hidden; color: #fff; font-family: "Poppins", sans-serif;
+    text-align: center;
+  }
+  canvas {
+    background: #001219; display: block; margin: 0 auto;
+    border: 2px solid #00b4d8; border-radius: 10px;
+  }
+  h1 { color: #00b4d8; margin: 10px 0; }
+  p { color: #caf0f8; }
+  /* Botones táctiles */
+  .controls {
+    display: none;
+    margin-top: 15px;
+  }
+  .btn {
+    background: #00b4d8;
+    color: #001219;
+    border: none;
+    padding: 12px 18px;
+    font-size: 20px;
+    border-radius: 10px;
+    margin: 5px;
+    font-weight: bold;
+  }
+  .btn:active {
+    background: #0096c7;
+  }
+  @media (max-width: 768px) {
+    .controls {
+      display: block;
+    }
+  }
+</style>
+</head>
+<body>
+<h1>🧱 Reconstruye tu Camino</h1>
+<p>Usa ⬅️ ➡️ ⬆️ o toca los botones para jugar</p>
+<canvas id="game" width="600" height="300"></canvas>
+<p id="msg"></p>
+
+<!-- Botones para celular -->
+<div class="controls">
+  <button class="btn" id="left">⬅️</button>
+  <button class="btn" id="jump">⤴️</button>
+  <button class="btn" id="right">➡️</button>
+</div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let player = { x: 50, y: 260, width: 20, height: 20, vy: 0, jumping: false };
+let gravity = 0.8;
+let ground = 280;
+let obstacles = [{x:200, w:40}, {x:350, w:40}, {x:500, w:40}];
+let rightPressed = false, leftPressed = false;
+let msg = document.getElementById("msg");
+let gameOver = false;
+
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowRight") rightPressed = true;
+  if (e.key === "ArrowLeft") leftPressed = true;
+  if (e.key === "ArrowUp" && !player.jumping) jump();
+});
+document.addEventListener("keyup", e => {
+  if (e.key === "ArrowRight") rightPressed = false;
+  if (e.key === "ArrowLeft") leftPressed = false;
+});
+
+// Controles táctiles
+document.getElementById("left").addEventListener("touchstart", () => leftPressed = true);
+document.getElementById("left").addEventListener("touchend", () => leftPressed = false);
+document.getElementById("right").addEventListener("touchstart", () => rightPressed = true);
+document.getElementById("right").addEventListener("touchend", () => rightPressed = false);
+document.getElementById("jump").addEventListener("touchstart", jump);
+
+function jump() {
+  if (!player.jumping) {
+    player.vy = -10;
+    player.jumping = true;
+  }
+}
+
+function drawPlayer() {
+  ctx.fillStyle = "#00b4d8";
+  ctx.fillRect(player.x, player.y, player.width, player.height);
+}
+function drawObstacles() {
+  ctx.fillStyle = "#ffd60a";
+  obstacles.forEach(o => ctx.fillRect(o.x, ground - o.w, 20, o.w));
+}
+
+function update() {
+  if (rightPressed) player.x += 3;
+  if (leftPressed) player.x -= 3;
+  player.vy += gravity;
+  player.y += player.vy;
+
+  if (player.y >= ground - player.height) {
+    player.y = ground - player.height;
+    player.jumping = false;
+  }
+
+  // colisión
+  obstacles.forEach(o => {
+    if (player.x < o.x + 20 && player.x + player.width > o.x &&
+        player.y + player.height > ground - o.w) {
+      msg.innerText = "💥 Caíste, pero puedes volver a intentarlo.";
+      reset();
+    }
+  });
+
+  // victoria
+  if (player.x > 580) {
+    msg.innerText = "🏆 ¡Lo lograste! Cada caída te hace más fuerte.";
+    gameOver = true;
+  }
+}
+
+function reset() {
+  player.x = 50;
+  player.y = 260;
+  player.vy = 0;
+  player.jumping = false;
+}
+
+function loop() {
+  ctx.clearRect(0, 0, 600, 300);
+  drawPlayer();
+  drawObstacles();
+  if (!gameOver) update();
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+
+<!-- Créditos -->
+<div style="text-align: center; margin-top: 20px; color: #66ccff; font-family: 'Segoe UI', sans-serif;">
+  <p><strong>Autores:</strong> Santiago Arcila Gutiérrez, Valentina Jaramillo Flórez, Juan Guillermo Agudelo, Angy Michell Restrepo</p>
+</div>
+
+</body>
+</html>
